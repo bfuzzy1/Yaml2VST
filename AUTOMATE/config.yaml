@@ -1,0 +1,37 @@
+id: "12345"
+name: "TestName"
+unit: "TestUnit"
+created: "2023-01-01"
+endpointCalls:
+  - function: "Start"
+    testFunction: "test"
+    cleanFunction: "clean"
+  - function: "Say"
+    arguments: ["Starting combined Endpoint and Network tests"]
+  - function: "Shell"
+    arguments: ["ls", "-l"]
+  - function: "Stop"
+    arguments: ["100"]
+networkCalls:
+  - function: "GET"
+    url: "https://example.com"
+    headers:
+      Content-Type: ["application/json"]
+    queryParams:
+      key: ["value"]
+  - function: "POST"
+    url: "https://example.com/post"
+    body: "Your request body here"
+    encoding: "gzip"
+  - function: "TCP"
+    host: "127.0.0.1"
+    port: "8080"
+    message: "Hello TCP"
+  - function: "UDP"
+    host: "127.0.0.1"
+    port: "8081"
+    message: "Hello UDP"
+  - function: "ScanPort"
+    protocol: "tcp"
+    hostname: "localhost"
+    port: 80
