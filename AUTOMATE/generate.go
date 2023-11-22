@@ -26,25 +26,57 @@ type Config struct {
 
 // EndpointCall represents a single call to an Endpoint function
 type EndpointCall struct {
-	Function      string   `yaml:"function"`
-	Arguments     []string `yaml:"arguments,omitempty"`
-	TestFunction  string   `yaml:"testFunction,omitempty"`
-	CleanFunction string   `yaml:"cleanFunction,omitempty"`
+	Function  string   `yaml:"function"`
+	Arguments []string `yaml:"arguments,omitempty"`
+
+	// For file operations
+	FilePath    string `yaml:"filePath,omitempty"`
+	FileContent string `yaml:"fileContent,omitempty"` // Could be base64 encoded for binary data
+	FileType    string `yaml:"fileType,omitempty"`    // e.g., for filtering in Find function
+
+	// For encryption/decryption
+	EncryptionKey string `yaml:"encryptionKey,omitempty"`
+	DataToEncrypt string `yaml:"dataToEncrypt,omitempty"`
+	DataToDecrypt string `yaml:"dataToDecrypt,omitempty"`
+
+	// For shell commands, if multiple commands are to be executed
+	ShellCommands []string `yaml:"shellCommands,omitempty"`
+
+	// Special functions
+	TestFunction  string `yaml:"testFunction,omitempty"`
+	CleanFunction string `yaml:"cleanFunction,omitempty"`
+	ErrorCode     int    `yaml:"errorCode,omitempty"` // For use with Stop function
 }
 
 // NetworkCall represents a single call to a Network function
 type NetworkCall struct {
 	Function    string              `yaml:"function"`
 	URL         string              `yaml:"url,omitempty"`
+	Method      string              `yaml:"method,omitempty"` // GET, POST, HEAD, DELETE
 	Headers     map[string][]string `yaml:"headers,omitempty"`
 	QueryParams map[string][]string `yaml:"queryParams,omitempty"`
 	Body        string              `yaml:"body,omitempty"`
-	Encoding    string              `yaml:"encoding,omitempty"`
-	Host        string              `yaml:"host,omitempty"`
-	Port        string              `yaml:"port,omitempty"`
-	Message     string              `yaml:"message,omitempty"`
-	Protocol    string              `yaml:"protocol,omitempty"`
-	Hostname    string              `yaml:"hostname,omitempty"`
+	Encoding    string              `yaml:"encoding,omitempty"` // e.g., "gzip"
+
+	// Authentication
+	AuthType   string `yaml:"authType,omitempty"` // e.g., "Basic", "Bearer"
+	Credential string `yaml:"credential,omitempty"`
+
+	// Request Options
+	Timeout   int    `yaml:"timeout,omitempty"` // in seconds
+	UserAgent string `yaml:"userAgent,omitempty"`
+
+	// TCP/UDP Specific
+	Host    string `yaml:"host,omitempty"`
+	Port    string `yaml:"port,omitempty"`
+	Message string `yaml:"message,omitempty"`
+
+	// Port Scanning
+	Protocol string `yaml:"protocol,omitempty"` // tcp, udp
+	Hostname string `yaml:"hostname,omitempty"`
+	Ports    []int  `yaml:"ports,omitempty"` // for scanning multiple ports
+
+	// Internal IP retrieval (no additional fields needed)
 }
 
 // Template text for generating the Go file
@@ -79,6 +111,7 @@ func test() {
     // Network calls
     {{- range $.NetworkCalls}}
     {{- if eq .Function "GET"}}
+    	Endpoint.Say("Executing GET Request")
         requestOptions := Network.RequestParameters{
             Headers: map[string][]string{"Content-Type": {"application/json"}},
             QueryParams: map[string][]string{
@@ -97,11 +130,15 @@ func test() {
         }
     {{- else if eq .Function "POST"}}
         // Similar implementation for POST
+	Endpoint.Say("Executing POST Request")
     {{- else if eq .Function "TCP"}}
+    	Endpoint.Say("Executing TCP connection")
         Network.TCP("{{.Host}}", "{{.Port}}", []byte("{{.Message}}"))
     {{- else if eq .Function "UDP"}}
+    	Endpoint.Say("Executing UDP connection")
         Network.UDP("{{.Host}}", "{{.Port}}", []byte("{{.Message}}"))
     {{- else if eq .Function "ScanPort"}}
+    	Endpoint.Say("Executing Port Scan")
         isOpen := Network.ScanPort("{{.Protocol}}", "{{.Hostname}}", {{.Port}})
         Endpoint.Say(fmt.Sprintf("ScanPort: Port %d open: %v", {{.Port}}, isOpen))
     {{- end}}
@@ -142,7 +179,7 @@ func main() {
 
 	// Create a file with a UTC timestamp in the name
 	timestamp := time.Now().UTC().Format("20060102-150405")
-	filename := fmt.Sprintf("generated_code/generate-%s.go", timestamp)
+	filename := fmt.Sprintf("generated_code/generated-%s.go", timestamp)
 	file, err := os.Create(filename)
 	if err != nil {
 		panic(err)
