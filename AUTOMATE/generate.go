@@ -9,12 +9,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Config represents the YAML configuration structure
+type ImportConfig struct {
+	Alias string `yaml:"alias,omitempty"`
+	Path  string `yaml:"path"`
+}
+
 type Config struct {
 	ID            string         `yaml:"id"`
 	Name          string         `yaml:"name"`
 	Unit          string         `yaml:"unit"`
 	Created       string         `yaml:"created"`
+	Imports       []ImportConfig `yaml:"imports,omitempty"`
 	EndpointCalls []EndpointCall `yaml:"endpointCalls"`
 	NetworkCalls  []NetworkCall  `yaml:"networkCalls"`
 }
@@ -51,12 +56,17 @@ CREATED: {{.Created}}
 */
 package main
 
+{{- if .Imports}}
 import (
-	Endpoint "github.com/preludeorg/libraries/go/tests/endpoint"
-	Network "github.com/preludeorg/libraries/go/tests/network"
-	"fmt"
-	"time"
+{{- range .Imports}}
+    {{- if .Alias}}
+        {{.Alias}} "{{.Path}}"
+    {{- else}}
+        "{{.Path}}"
+    {{- end}}
+{{- end}}
 )
+{{- end}}
 
 func test() {
     // Endpoint calls
@@ -67,7 +77,7 @@ func test() {
     {{- end}}
 
     // Network calls
-	{{- range $.NetworkCalls}}
+    {{- range $.NetworkCalls}}
     {{- if eq .Function "GET"}}
         requestOptions := Network.RequestParameters{
             Headers: map[string][]string{"Content-Type": {"application/json"}},
@@ -90,7 +100,7 @@ func test() {
     {{- else if eq .Function "TCP"}}
         Network.TCP("{{.Host}}", "{{.Port}}", []byte("{{.Message}}"))
     {{- else if eq .Function "UDP"}}
-		Network.UDP("{{.Host}}", "{{.Port}}", []byte("{{.Message}}"))
+        Network.UDP("{{.Host}}", "{{.Port}}", []byte("{{.Message}}"))
     {{- else if eq .Function "ScanPort"}}
         isOpen := Network.ScanPort("{{.Protocol}}", "{{.Hostname}}", {{.Port}})
         Endpoint.Say(fmt.Sprintf("ScanPort: Port %d open: %v", {{.Port}}, isOpen))
