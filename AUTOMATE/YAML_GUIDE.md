@@ -1,6 +1,6 @@
-# YAML Configuration Guide
+# YAML Configuration Guide for Test
 
-This guide provides comprehensive documentation on how to structure YAML configuration files.
+This guide provides comprehensive documentation on how to structure YAML configuration files for our test. YAML configuration files allow you to define various settings and specify actions to be performed within the test.
 
 ## Table of Contents
 
@@ -15,25 +15,25 @@ This guide provides comprehensive documentation on how to structure YAML configu
 
 ## 1. General Configuration
 
-The general configuration section defines basic project information.
+The general configuration section defines basic information about the test.
 
-- `id`: A unique identifier for the project.
-- `name`: The name of the project.
-- `unit`: The unit to which the project belongs.
-- `created`: The creation date of the project in YYYY-MM-DD format.
+- `id`: A unique identifier for the test.
+- `name`: The name of the test.
+- `unit`: The unit to which the test belongs.
+- `created`: The creation date of the test in YYYY-MM-DD format.
 
 Example:
 
 ```yaml
 id: "12345"
-name: "ProjectName"
-unit: "ProjectUnit"
+name: "TestName"
+unit: "TestUnit"
 created: "2023-01-01"
 ```
 
 ## 2. Imports
 
-The `imports` section allows you to specify external libraries or packages that your project depends on. You can use aliases for imports.
+The `imports` section allows you to specify external libraries or packages that your test depends on. You can use aliases for imports.
 
 Example:
 
@@ -48,7 +48,7 @@ imports:
 
 ## 3. Embedded Files
 
-The `embeddedFiles` section is used to embed external files into the project. These files can be accessed within your code.
+The `embeddedFiles` section is used to embed external files into the test. These files can be accessed within your code.
 
 Example:
 
@@ -121,23 +121,23 @@ networkCalls:
 
 ### Supported Functions
 
-Here is documentation for the supported functions and their usage:
+Here is documentation for the supported functions and their usage in the test:
 
 - **`Start`**
   - **Arguments**: None
-  - **Description**: Start the project and execute the test and clean-up functions.
+  - **Description**: Start the test and execute the test and clean-up functions.
 
 - **`Say`**
   - **Arguments**: A list of messages to display.
-  - **Description**: Display messages in the project.
+  - **Description**: Display messages in the test.
 
 - **`Shell`**
   - **Arguments**: List of shell commands to execute.
-  - **Description**: Execute shell commands within the project.
+  - **Description**: Execute shell commands within the test.
 
 - **`Stop`**
   - **Arguments**: An error code.
-  - **Description**: Stop the project execution with the specified error code.
+  - **Description**: Stop the test execution with the specified error code.
 
 - **`Find`**
   - **Arguments**: A file type to search for.
@@ -153,7 +153,9 @@ Here is documentation for the supported functions and their usage:
 
 - **`Exists`**
   - **Arguments**: The file path to check.
-  - **Description**: Check if a file exists.
+  -
+
+ **Description**: Check if a file exists.
 
 - **`Quarantined`**
   - **Arguments**: The filename and quarantine type.
