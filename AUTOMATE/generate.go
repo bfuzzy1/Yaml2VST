@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"text/template"
 	"time"
@@ -65,11 +66,6 @@ type Config struct {
 	EmbeddedFiles []EmbeddedFile `yaml:"embeddedFiles,omitempty"`
 	EndpointCalls []EndpointCall `yaml:"endpointCalls"`
 	NetworkCalls  []NetworkCall  `yaml:"networkCalls"`
-}
-
-type Model struct {
-	Prompt   string
-	Response string
 }
 
 const templateText = `/*
@@ -235,7 +231,6 @@ func main() {
     // Starting the application with necessary endpoint calls.
     {{- range .EndpointCalls}}
         {{- if eq .Function "Start"}}
-        // Starting the test and clean functions.
         Endpoint.Start(test, clean)
         {{- end}}
     {{- end}}
@@ -248,15 +243,13 @@ func main() {
 
 	yamlFile, err := os.ReadFile(yamlFilePath)
 	if err != nil {
-		fmt.Printf("Failed to read YAML file: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to read YAML file: %v\n", err)
 	}
 
 	var conf Config
 	err = yaml.Unmarshal(yamlFile, &conf)
 	if err != nil {
-		fmt.Printf("Failed to unmarshal YAML: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to unmarshal YAML: %v\n", err)
 	}
 
 	// Generate UUID for ID if not provided
@@ -272,8 +265,7 @@ func main() {
 	// Create generated_code directory if it doesn't exist
 	err = os.MkdirAll("generated_code", 0755)
 	if err != nil {
-		fmt.Printf("Failed to create directory: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to create directory: %v\n", err)
 	}
 
 	// Create a file with a UTC timestamp in the name
@@ -281,8 +273,7 @@ func main() {
 	filename := fmt.Sprintf("generated_code/generated-%s.go", timestamp)
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Printf("Failed to create file: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to create file: %v\n", err)
 	}
 	defer file.Close()
 
@@ -290,8 +281,7 @@ func main() {
 	t := template.Must(template.New("goFile").Parse(templateText))
 	err = t.Execute(file, conf)
 	if err != nil {
-		fmt.Printf("Failed to execute template: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to execute template: %v\n", err)
 	}
 
 	fmt.Println("File generated:", filename)
