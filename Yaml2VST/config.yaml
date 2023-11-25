@@ -1,0 +1,79 @@
+id: ""
+name: "TestName"
+unit: "TestUnit"
+created: ""
+imports:
+  - alias: "Endpoint"
+    path: "github.com/preludeorg/libraries/go/tests/endpoint"
+  - alias: "Network"
+    path: "github.com/preludeorg/libraries/go/tests/network"
+  - path: "fmt"
+embeddedFiles:
+  - name: "emlFile"
+    content: |
+      //go:embed fromrussiawithlove.eml
+      var emlFile []byte
+  - name: "pdfFile"
+    content: |
+      //go:embed fromrussiawithlove.pdf
+      var pdfFile []byte
+endpointCalls:
+  - function: "Start"
+    testFunction: "test"
+    cleanFunction: "clean"
+  - function: "Say"
+    arguments: ["Starting combined Endpoint and Network tests"]
+  - function: "Shell"
+    shellCommands:
+      - ["cmd.exe", "/C", "wmic path win32_logicaldisk get caption,filesystem,freespace,size,volumename"]
+  - function: "Stop"
+    arguments: ["100"]
+  - function: "Find"
+    arguments: [".txt"]
+  - function: "Read"
+    arguments: ["path/to/file.txt"]
+  - function: "Write"
+    arguments: ["filename.txt", "Hello, World!"]
+  - function: "Exists"
+    arguments: ["path/to/file.txt"]
+  - function: "Quarantined"
+    arguments: ["malicious_file.exe"]
+  - function: "Remove"
+    arguments: ["path/to/remove.txt"]
+  - function: "ExecuteRandomCommand"
+    shellCommands:
+      - ["ls", "-la"]
+      - ["echo", "Hello World"]
+  - function: "IsAvailable"
+    arguments: ["bash", "python"]
+  - function: "IsSecure"
+networkCalls:
+  - function: "GET"
+    url: "https://example.com"
+    headers:
+      Content-Type: ["application/json"]
+    queryParams:
+      key: ["value"]
+  - function: "POST"
+    url: "https://example.com/api"
+    headers:
+      Content-Type:
+        - application/json
+    body: "TESTING PAYLOAD"
+  - function: "TCP"
+    host: "127.0.0.1"
+    port: "8080"
+    message: "Hello TCP"
+  - function: "UDP"
+    host: "10.0.0.1"
+    port: "8081"
+    message: "Hello UDP"
+  - function: "ScanPort"
+    protocol: "tcp"
+    hostname: "localhost"
+    port: 80
+  - function: "MultiplePortScan"
+    ports:
+      - 22
+      - 80
+      - 443
