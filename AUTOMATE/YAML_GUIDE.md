@@ -1,4 +1,4 @@
-# YAML Configuration Guide for Test
+# YAML Configuration Guide for Yaml2VST
 
 This guide provides comprehensive documentation on how to structure YAML configuration files for our test. YAML configuration files allow you to define various settings and specify actions to be performed within the test.
 
