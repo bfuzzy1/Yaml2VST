@@ -1,85 +1,71 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"text/template"
 	"time"
 
+	"fmt"
+
 	"gopkg.in/yaml.v2"
 )
 
+// ImportConfig represents an import configuration.
 type ImportConfig struct {
-	Alias string `yaml:"alias,omitempty"`
-	Path  string `yaml:"path"`
+	Alias         string            `yaml:"alias,omitempty"`
+	Path          string            `yaml:"path"`
+	Filename      string            `yaml:"filename,omitempty"`
+	EmbeddedFiles map[string][]byte `yaml:"embeddedFiles,omitempty"`
+	EmbeddedFS    map[string]string `yaml:"embeddedFS,omitempty"`
 }
 
+// EndpointCall represents a single call to an Endpoint function.
+type EndpointCall struct {
+	Function      string     `yaml:"function"`
+	Arguments     []string   `yaml:"arguments,omitempty"`
+	ShellCommands [][]string `yaml:"shellCommands,omitempty"`
+	TestFunction  string     `yaml:"testFunction,omitempty"`
+	CleanFunction string     `yaml:"cleanFunction,omitempty"`
+}
+
+// NetworkCall represents a single call to a Network function.
+type NetworkCall struct {
+	Function    string              `yaml:"function"`
+	URL         string              `yaml:"url,omitempty"`
+	Headers     map[string][]string `yaml:"headers,omitempty"`
+	QueryParams map[string][]string `yaml:"queryParams,omitempty"`
+	Body        string              `yaml:"body,omitempty"`
+	Encoding    string              `yaml:"encoding,omitempty"`
+	AuthType    string              `yaml:"authType,omitempty"`
+	Credential  string              `yaml:"credential,omitempty"`
+	Timeout     int                 `yaml:"timeout,omitempty"`
+	UserAgent   string              `yaml:"userAgent,omitempty"`
+	Host        string              `yaml:"host,omitempty"`
+	Port        string              `yaml:"port,omitempty"`
+	Message     string              `yaml:"message,omitempty"`
+	Protocol    string              `yaml:"protocol,omitempty"`
+	Hostname    string              `yaml:"hostname,omitempty"`
+	Ports       []int               `yaml:"ports,omitempty"`
+}
+
+// EmbeddedFile represents an embedded file configuration.
+type EmbeddedFile struct {
+	Name    string `yaml:"name"`
+	Content string `yaml:"content"`
+}
+
+// Config represents the main configuration structure.
 type Config struct {
 	ID            string         `yaml:"id"`
 	Name          string         `yaml:"name"`
 	Unit          string         `yaml:"unit"`
 	Created       string         `yaml:"created"`
 	Imports       []ImportConfig `yaml:"imports,omitempty"`
+	EmbeddedFiles []EmbeddedFile `yaml:"embeddedFiles,omitempty"`
 	EndpointCalls []EndpointCall `yaml:"endpointCalls"`
 	NetworkCalls  []NetworkCall  `yaml:"networkCalls"`
 }
 
-// EndpointCall represents a single call to an Endpoint function
-type EndpointCall struct {
-	Function  string   `yaml:"function"`
-	Arguments []string `yaml:"arguments,omitempty"`
-
-	// For file operations
-	FilePath    string `yaml:"filePath,omitempty"`
-	FileContent string `yaml:"fileContent,omitempty"` // Could be base64 encoded for binary data
-	FileType    string `yaml:"fileType,omitempty"`    // e.g., for filtering in Find function
-
-	// For encryption/decryption
-	EncryptionKey string `yaml:"encryptionKey,omitempty"`
-	DataToEncrypt string `yaml:"dataToEncrypt,omitempty"`
-	DataToDecrypt string `yaml:"dataToDecrypt,omitempty"`
-
-	// For shell commands, if multiple commands are to be executed
-	ShellCommands []string `yaml:"shellCommands,omitempty"`
-
-	// Special functions
-	TestFunction  string `yaml:"testFunction,omitempty"`
-	CleanFunction string `yaml:"cleanFunction,omitempty"`
-	ErrorCode     int    `yaml:"errorCode,omitempty"` // For use with Stop function
-}
-
-// NetworkCall represents a single call to a Network function
-type NetworkCall struct {
-	Function    string              `yaml:"function"`
-	URL         string              `yaml:"url,omitempty"`
-	Method      string              `yaml:"method,omitempty"` // GET, POST, HEAD, DELETE
-	Headers     map[string][]string `yaml:"headers,omitempty"`
-	QueryParams map[string][]string `yaml:"queryParams,omitempty"`
-	Body        string              `yaml:"body,omitempty"`
-	Encoding    string              `yaml:"encoding,omitempty"` // e.g., "gzip"
-
-	// Authentication
-	AuthType   string `yaml:"authType,omitempty"` // e.g., "Basic", "Bearer"
-	Credential string `yaml:"credential,omitempty"`
-
-	// Request Options
-	Timeout   int    `yaml:"timeout,omitempty"` // in seconds
-	UserAgent string `yaml:"userAgent,omitempty"`
-
-	// TCP/UDP Specific
-	Host    string `yaml:"host,omitempty"`
-	Port    string `yaml:"port,omitempty"`
-	Message string `yaml:"message,omitempty"`
-
-	// Port Scanning
-	Protocol string `yaml:"protocol,omitempty"` // tcp, udp
-	Hostname string `yaml:"hostname,omitempty"`
-	Ports    []int  `yaml:"ports,omitempty"` // for scanning multiple ports
-
-	// Internal IP retrieval (no additional fields needed)
-}
-
-// Template text for generating the Go file
 const templateText = `/*
 ID: {{.ID}}
 NAME: {{.Name}}
@@ -100,18 +86,64 @@ import (
 )
 {{- end}}
 
+{{- range .EmbeddedFiles}}
+{{ .Content }}
+{{- end }}
+
 func test() {
     // Endpoint calls
     {{- range $.EndpointCalls}}
-    {{- if and (ne .Function "Start") (ne .Function "Stop")}}
-    Endpoint.{{ .Function }}({{range $i, $arg := .Arguments}}{{if $i}}, {{end}}{{printf "%q" $arg}}{{end}})
+    {{- if eq .Function "Say"}}
+        Endpoint.Say({{index .Arguments 0 | printf "%q"}})
+        
+    {{- else if eq .Function "Shell"}}
+        {{- range $cmdSet := .ShellCommands}}
+        command := []string{ {{- range $i, $cmd := $cmdSet}}{{if $i}}, {{end}}{{printf "%q" $cmd}}{{- end}} }
+        Endpoint.Shell(command)
+        
+        {{- end}}
+    {{- else if eq .Function "Find"}}
+        Endpoint.Say("Starting scan for files")
+        fileType := {{index .Arguments 0 | printf "%q"}}
+        files := Endpoint.Find(fileType)
+        if len(files) == 0 {
+            Endpoint.Stop(104)
+        }
+        
+    {{- else if eq .Function "Read"}}
+        Endpoint.Say("Reading file")
+        file := {{index .Arguments 0 | printf "%q"}}
+        contents := Endpoint.Read(file) // use contents for something later
+        
+    {{- else if eq .Function "Write"}}
+        Endpoint.Say("Writing file")
+        Endpoint.Write({{index .Arguments 0 | printf "%q"}}, []byte({{index .Arguments 1 | printf "%q"}}))
+        
+    {{- else if eq .Function "Exists"}}
+        Endpoint.Say("Checking if file exists")
+        exists := Endpoint.Exists({{index .Arguments 0 | printf "%q"}})
+        
+    {{- else if eq .Function "Quarantined"}}
+        Endpoint.Say("Extracting file for quarantine test")
+        Endpoint.Say("Pausing for 3 seconds to gauge defensive reaction")
+        filename := {{index .Arguments 0 | printf "%q"}}
+        if Endpoint.Quarantined(filename, malicious) {
+            Endpoint.Say("Malicious file was caught!")
+            Endpoint.Stop(105)
+        } else {
+            Endpoint.Say("Malicious file was not caught")
+        }
     {{- end}}
+    
+    {{- if ne .Function "Clean"}}
+    
     {{- end}}
+    
+{{- end}}
 
-    // Network calls
-    {{- range $.NetworkCalls}}
+{{- range $.NetworkCalls}}
     {{- if eq .Function "GET"}}
-    	Endpoint.Say("Executing GET Request")
+        Endpoint.Say("Executing GET Request")
         requestOptions := Network.RequestParameters{
             Headers: map[string][]string{"Content-Type": {"application/json"}},
             QueryParams: map[string][]string{
@@ -128,21 +160,55 @@ func test() {
         } else {
             Endpoint.Say("GET Response: " + string(response.Body))
         }
-    {{- else if eq .Function "POST"}}
-        // Similar implementation for POST
-	Endpoint.Say("Executing POST Request")
+        
+	{{- else if eq .Function "POST"}}
+		Endpoint.Say("Executing POST Request")
+		requestOptions := Network.RequestParameters{
+			Headers: map[string][]string{"Content-Type": {"application/json"}},
+			Body: []byte("{{.Body}}"),
+		}
+		requester = Network.NewHTTPRequest("{{.URL}}", nil)
+		response, err = requester.POST(requestOptions)
+		if err != nil {
+			Endpoint.Say("POST Error: " + err.Error())
+		} else {
+			Endpoint.Say("POST Response: " + string(response.Body))
+		}
+	
+        
     {{- else if eq .Function "TCP"}}
-    	Endpoint.Say("Executing TCP connection")
+        Endpoint.Say("Executing TCP connection")
         Network.TCP("{{.Host}}", "{{.Port}}", []byte("{{.Message}}"))
+        
     {{- else if eq .Function "UDP"}}
-    	Endpoint.Say("Executing UDP connection")
+        Endpoint.Say("Executing UDP connection")
         Network.UDP("{{.Host}}", "{{.Port}}", []byte("{{.Message}}"))
+        
     {{- else if eq .Function "ScanPort"}}
-    	Endpoint.Say("Executing Port Scan")
+        Endpoint.Say("Executing Port Scan")
         isOpen := Network.ScanPort("{{.Protocol}}", "{{.Hostname}}", {{.Port}})
         Endpoint.Say(fmt.Sprintf("ScanPort: Port %d open: %v", {{.Port}}, isOpen))
+        
+    {{- else if eq .Function "MultiplePortScan"}}
+        Endpoint.Say("Executing Multi Port Scan")
+        fmt.Println("Ports:", []int{ {{- range $i, $port := .Ports}}{{if $i}}, {{end}}{{ $port }}{{- end}} })
+        for _, port := range []int{ {{- range $i, $port := .Ports}}{{if $i}}, {{end}}{{ $port }}{{- end}} } {
+            isOpen := Network.ScanPort("{{.Protocol}}", "{{.Hostname}}", port)
+            if isOpen {
+                fmt.Printf("Port %d is open!\n", port)
+            } else {
+                fmt.Printf("Port %d is closed!\n", port)
+            }
+        }
     {{- end}}
+    
+    {{- if ne .Function "Clean"}}
+    
     {{- end}}
+    
+{{- end}}
+
+
 }
 
 func clean() {
@@ -151,9 +217,9 @@ func clean() {
 
 func main() {
     {{- range .EndpointCalls}}
-    {{- if eq .Function "Start"}}
-    Endpoint.Start(test, clean)
-    {{- end}}
+        {{- if eq .Function "Start"}}
+            Endpoint.Start(test, clean)
+        {{- end}}
     {{- end}}
 }
 `
@@ -193,5 +259,5 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("File generated:", filename)
+	println("File generated:", filename)
 }
