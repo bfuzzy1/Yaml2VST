@@ -1,6 +1,6 @@
 # Yaml2VST
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bfuzzy1/yaml2vst)](https://goreportcard.com/report/github.com/bfuzzy1/yaml2vst)
 
 Yaml2VST is a tool for converting YAML configurations into Verified Security Tests (VST) code. It simplifies the process of generating security tests based on YAML-defined configurations, making it easy to automate and verify security-related tasks.
