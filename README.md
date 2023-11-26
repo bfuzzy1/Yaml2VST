@@ -30,13 +30,13 @@ To get started with Yaml2VST, you need to install it on your system. You can do 
 1. Clone the repository:
 
    ```shell
-   git clone https://github.com/yourusername/yaml2vst.git
+   git clone https://github.com/bfuzzy1/Yaml2VST.git
    ```
 
 2. Build the binary:
 
    ```shell
-   cd yaml2vst
+   cd Yaml2VST
    go build
    ```
 
@@ -54,4 +54,4 @@ Yaml2VST is open-source and available under the [BSD 3 Clause License](LICENSE).
 
 If you have any questions, suggestions, or feedback, feel free to reach out.
 
-- GitHub Issues: [Submit an Issue](https://github.com/bfuzzy1/yaml2vst/issues)
+- GitHub Issues: [Submit an Issue](https://github.com/bfuzzy1/Yaml2VST/issues)
