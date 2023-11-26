@@ -48,10 +48,10 @@ To get started with Yaml2VST, you need to install it on your system. You can do 
 
 ## License
 
-Yaml2VST is open-source and available under the [MIT License](LICENSE). You are free to use, modify, and distribute this software for both personal and commercial use.
+Yaml2VST is open-source and available under the [BSD 3 Clause License](LICENSE).
 
 ## Contact
 
 If you have any questions, suggestions, or feedback, feel free to reach out.
 
-- GitHub Issues: [Submit an Issue](https://github.com/yourusername/yaml2vst/issues)
+- GitHub Issues: [Submit an Issue](https://github.com/bfuzzy1/yaml2vst/issues)
