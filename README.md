@@ -21,7 +21,7 @@ To help you get started quickly, here's an example YAML configuration:
 
 [Example config.yaml](https://github.com/bfuzzy1/Yaml2VST/blob/main/Yaml2VST/config.yaml)
 
-This YAML configuration, when processed by Yaml2VST, will generate VST code based on the hardcoded template defined in the source code.
+This YAML configuration, when processed by Yaml2VST, will generate VST code based on on a hardcoded template defined in the source code.
 
 ## Installation
 
