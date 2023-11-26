@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" serialNumber="urn:uuid:309d8b17-edbc-4367-9594-582b88a7c436" version="1">
+  <metadata>
+    <timestamp>2023-11-25T18:49:48-05:00</timestamp>
+    <tools>
+      <tool>
+        <vendor>CycloneDX</vendor>
+        <name>cyclonedx-gomod</name>
+        <version>v1.4.0</version>
+        <hashes>
+          <hash alg="MD5">b2609c86bbb1040733dccb6a2cfff0f6</hash>
+          <hash alg="SHA-1">266ca9f7b264d6d7b7b24885d85805aee06a9f72</hash>
+          <hash alg="SHA-256">883763d34405eeaffe93fcb36653535fd8ce35bc619898595df78b6b1b250b59</hash>
+          <hash alg="SHA-384">99199647b3a6d2c32f8b5f6d0eca2047fdeef0c6ec3c5145fd78698b313bf01a6ad59a0d81a6a14a5162463e419fe016</hash>
+          <hash alg="SHA-512">efc1d9830223dd6ac1832765faaa191b15d4f5a864bb2e787b78963bc635e62a4951293379881bedc4c1ba87ecd5a374de241cf6126b7d2c36abd7bdad32474c</hash>
+        </hashes>
+        <externalReferences>
+          <reference type="vcs">
+            <url>https://github.com/CycloneDX/cyclonedx-gomod</url>
+          </reference>
+          <reference type="website">
+            <url>https://cyclonedx.org</url>
+          </reference>
+        </externalReferences>
+      </tool>
+    </tools>
+    <component bom-ref="pkg:golang/Yaml2VST@v0.0.0-20231125234425-aee7ba312735?type=module" type="application">
+      <name>Yaml2VST</name>
+      <version>v0.0.0-20231125234425-aee7ba312735</version>
+      <purl>pkg:golang/Yaml2VST@v0.0.0-20231125234425-aee7ba312735?type=module&amp;goos=darwin&amp;goarch=arm64</purl>
+    </component>
+    <properties>
+      <property name="cdx:gomod:binary:hash:MD5">2b0a13feb0871c97545d0b3328451753</property>
+      <property name="cdx:gomod:binary:hash:SHA-1">126715977e8d3df854a687d75e45937ea091e9e9</property>
+      <property name="cdx:gomod:binary:hash:SHA-256">20c5a79ceaa8f534e0d6c5444cd6477ad126cae823b03c217c8f122ea5c73fec</property>
+      <property name="cdx:gomod:binary:hash:SHA-384">16ad8dd4cc74fd3f354eeeb82771cf72e029893878d1f56fc5cc31fc4758197fba32995ca4ecc9da5804b2e1cf7007ce</property>
+      <property name="cdx:gomod:binary:hash:SHA-512">ffa69f63f508511826aa7539e546a767de006e2bb273ae19f3218ff0b8f1b28696e4a3fdaf6b4e7f204370a674bc646aeaf4895a850066da51df44d59590925e</property>
+      <property name="cdx:gomod:binary:name">Yaml2VST</property>
+      <property name="cdx:gomod:build:compiler">gc</property>
+      <property name="cdx:gomod:build:env:CGO_ENABLED">1</property>
+      <property name="cdx:gomod:build:env:GOARCH">arm64</property>
+      <property name="cdx:gomod:build:env:GOOS">darwin</property>
+      <property name="cdx:gomod:build:env:GOVERSION">go1.21.0</property>
+      <property name="cdx:gomod:build:vcs">git</property>
+      <property name="cdx:gomod:build:vcs:modified">true</property>
+      <property name="cdx:gomod:build:vcs:revision">aee7ba31273530e61744decf8978f26cb3dfa889</property>
+      <property name="cdx:gomod:build:vcs:time">2023-11-25T23:44:25Z</property>
+    </properties>
+  </metadata>
+  <components>
+    <component bom-ref="pkg:golang/github.com/google/uuid@v1.4.0?type=module" type="library">
+      <name>github.com/google/uuid</name>
+      <version>v1.4.0</version>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="SHA-256">32d331b1ae75febf72ca19322ec55e56dd01f81190673a5089343878767c6dce</hash>
+      </hashes>
+      <purl>pkg:golang/github.com/google/uuid@v1.4.0?type=module&amp;goos=darwin&amp;goarch=arm64</purl>
+      <externalReferences>
+        <reference type="vcs">
+          <url>https://github.com/google/uuid</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component bom-ref="pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module" type="library">
+      <name>gopkg.in/yaml.v2</name>
+      <version>v2.4.0</version>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="SHA-256">0fcc60c04098ec262fc7e6369f8b01cfddc99fd251bf1762cb2a3c0937ee29a6</hash>
+      </hashes>
+      <purl>pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module&amp;goos=darwin&amp;goarch=arm64</purl>
+      <externalReferences>
+        <reference type="vcs">
+          <url>https://github.com/go-yaml/yaml</url>
+        </reference>
+      </externalReferences>
+    </component>
+  </components>
+  <dependencies>
+    <dependency ref="pkg:golang/Yaml2VST@v0.0.0-20231125234425-aee7ba312735?type=module">
+      <dependency ref="pkg:golang/github.com/google/uuid@v1.4.0?type=module"></dependency>
+      <dependency ref="pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module"></dependency>
+    </dependency>
+    <dependency ref="pkg:golang/github.com/google/uuid@v1.4.0?type=module"></dependency>
+    <dependency ref="pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module"></dependency>
+  </dependencies>
+  <compositions>
+    <composition>
+      <aggregate>complete</aggregate>
+      <dependencies>
+        <dependency ref="pkg:golang/Yaml2VST@v0.0.0-20231125234425-aee7ba312735?type=module"></dependency>
+      </dependencies>
+    </composition>
+    <composition>
+      <aggregate>unknown</aggregate>
+      <dependencies>
+        <dependency ref="pkg:golang/github.com/google/uuid@v1.4.0?type=module"></dependency>
+        <dependency ref="pkg:golang/gopkg.in/yaml.v2@v2.4.0?type=module"></dependency>
+      </dependencies>
+    </composition>
+  </compositions>
+</bom>
