@@ -5,9 +5,15 @@
 
 Yaml2VST is a tool for converting YAML configurations into [Verified Security Test](https://www.preludesecurity.com/blog/verified-security-tests-explained) (VST) code. It simplifies the process of generating security tests based on YAML-defined configurations, making it easy to automate and verify security-related tasks.
 
+---
+
+**Release: Alpha**
+
+Alpha Release: Yaml2VST is currently in its alpha release stage. This is an early version of the software, and as such, it is still under active development. Alpha releases are important for gathering user feedback and identifying potential issues. Users should note that features might change, and there might be some instability or bugs. As an alpha release user, your feedback is invaluable in shaping the future versions of Yaml2VST.
+
 ## Usage
 
-Yaml2VST is straightforward to use. You provide a YAML configuration file, and it generates VST code based on the hardcoded template provided in the source code. Here's an example of how to use it:
+Yaml2VST is straightforward to use. You provide a YAML configuration file, and it generates VST code based on the hardcoded template provided in the source code. Here's a brief example of how to use it:
 
 ```shell
 ./yaml2vst -yaml config.yaml
