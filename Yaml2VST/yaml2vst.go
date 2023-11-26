@@ -239,7 +239,6 @@ func main() {
 `
 
 func main() {
-	// Define a command-line flag for the YAML file path
 	yamlFilePath := flag.String("yaml", "config.yaml", "Path to the YAML configuration file")
 	flag.Parse()
 
@@ -264,7 +263,7 @@ func main() {
 		conf.Created = time.Now().Format("2006-01-02 15:04:05")
 	}
 
-	// Create generated_code directory if it doesn't exist
+	// Create directory if it doesn't exist
 	err = os.MkdirAll("generated_code", 0755)
 	if err != nil {
 		log.Fatalf("Failed to create directory: %v\n", err)
