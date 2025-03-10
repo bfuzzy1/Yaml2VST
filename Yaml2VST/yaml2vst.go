@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"text/template"
 	"time"
-
-	"fmt"
 
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
@@ -69,7 +69,81 @@ type Config struct {
 	NetworkCalls  []NetworkCall  `yaml:"networkCalls"`
 }
 
-const templateText = `/*
+// readConfig reads and parses the YAML configuration file.
+func readConfig(yamlFilePath string) (*Config, error) {
+	log.Printf("Reading configuration from %s", yamlFilePath)
+	
+	yamlFile, err := os.ReadFile(yamlFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read YAML file: %w", err)
+	}
+
+	var conf Config
+	if err = yaml.Unmarshal(yamlFile, &conf); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	}
+
+	return &conf, nil
+}
+
+// validateAndCompleteConfig ensures the config has all required fields and sets defaults where needed.
+func validateAndCompleteConfig(conf *Config) error {
+	// Validate required fields
+	if conf.Name == "" {
+		return fmt.Errorf("configuration is missing required 'name' field")
+	}
+	
+	if conf.Unit == "" {
+		return fmt.Errorf("configuration is missing required 'unit' field")
+	}
+
+	// Generate UUID for ID if not provided
+	if conf.ID == "" {
+		conf.ID = uuid.New().String()
+		log.Printf("Generated ID: %s", conf.ID)
+	}
+
+	// Generate timestamp for Created if not provided
+	if conf.Created == "" {
+		conf.Created = time.Now().Format("2006-01-02 15:04:05")
+		log.Printf("Generated timestamp: %s", conf.Created)
+	}
+
+	return nil
+}
+
+// generateCode applies the template to generate the Go source file.
+func generateCode(conf *Config, templateText string) (string, error) {
+	// Create directory if it doesn't exist
+	outputDir := "generated_code"
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create directory %s: %w", outputDir, err)
+	}
+
+	// Create a file with a UTC timestamp in the name
+	timestamp := time.Now().UTC().Format("20060102-150405")
+	filename := filepath.Join(outputDir, fmt.Sprintf("generated-%s.go", timestamp))
+	
+	log.Printf("Creating output file: %s", filename)
+	file, err := os.Create(filename)
+	if err != nil {
+		return "", fmt.Errorf("failed to create file: %w", err)
+	}
+	defer file.Close()
+
+	// Create and execute the template
+	t := template.Must(template.New("goFile").Parse(templateText))
+	if err := t.Execute(file, conf); err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	return filename, nil
+}
+
+// loadTemplate returns the template text for code generation.
+// In a real application, this could be loaded from a file.
+func loadTemplate() string {
+	return `/*
 ID: {{.ID}}
 NAME: {{.Name}}
 UNIT: {{.Unit}}
@@ -158,13 +232,20 @@ func test() {
         // GET function logic for Network.
         Endpoint.Say("Executing GET Request")
         requestOptions := Network.RequestParameters{
-            Headers: map[string][]string{"Content-Type": {"application/json"}},
+            Headers: map[string][]string{
+                "Content-Type": {"application/json"},
+                {{- range $key, $values := .Headers}}
+                "{{ $key }}": { {{- range $i, $v := $values}}{{if $i}}, {{end}}{{printf "%q" $v}}{{- end}} },
+                {{- end}}
+            },
             QueryParams: map[string][]string{
                 {{- range $key, $values := .QueryParams}}
                 "{{ $key }}": { {{- range $i, $v := $values}}{{if $i}}, {{end}}{{printf "%q" $v}}{{- end}} },
                 {{- end}}
             },
+            {{- if .Body}}
             Body: []byte("{{.Body}}"),
+            {{- end}}
         }
         requester := Network.NewHTTPRequest("{{.URL}}", nil)
         response, err := requester.GET(requestOptions)
@@ -178,8 +259,15 @@ func test() {
         // POST function logic for Network.
         Endpoint.Say("Executing POST Request")
         requestOptions := Network.RequestParameters{
-            Headers: map[string][]string{"Content-Type": {"application/json"}},
+            Headers: map[string][]string{
+                "Content-Type": {"application/json"},
+                {{- range $key, $values := .Headers}}
+                "{{ $key }}": { {{- range $i, $v := $values}}{{if $i}}, {{end}}{{printf "%q" $v}}{{- end}} },
+                {{- end}}
+            },
+            {{- if .Body}}
             Body: []byte("{{.Body}}"),
+            {{- end}}
         }
         requester := Network.NewHTTPRequest("{{.URL}}", nil)
         response, err := requester.POST(requestOptions)
@@ -208,8 +296,9 @@ func test() {
         {{- else if eq .Function "MultiplePortScan"}}
         // MultiplePortScan function logic for Network.
         Endpoint.Say("Executing Multi Port Scan")
-        fmt.Println("Ports:", []int{ {{- range $i, $port := .Ports}}{{if $i}}, {{end}}{{ $port }}{{- end}} })
-        for _, port := range []int{ {{- range $i, $port := .Ports}}{{if $i}}, {{end}}{{ $port }}{{- end}} } {
+        ports := []int{ {{- range $i, $port := .Ports}}{{if $i}}, {{end}}{{ $port }}{{- end}} }
+        fmt.Println("Ports:", ports)
+        for _, port := range ports {
             isOpen := Network.ScanPort("{{.Protocol}}", "{{.Hostname}}", port)
             if isOpen {
                 fmt.Printf("Port %d is open!\n", port)
@@ -237,53 +326,36 @@ func main() {
     {{- end}}
 }
 `
+}
 
 func main() {
+	// Parse command line flags
 	yamlFilePath := flag.String("yaml", "config.yaml", "Path to the YAML configuration file")
 	flag.Parse()
 
-	yamlFile, err := os.ReadFile(*yamlFilePath)
+	// Configure logging
+	log.SetPrefix("CodeGen: ")
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	
+	// Read and parse configuration
+	conf, err := readConfig(*yamlFilePath)
 	if err != nil {
-		log.Fatalf("Failed to read YAML file: %v\n", err)
+		log.Fatalf("Configuration error: %v", err)
 	}
-
-	var conf Config
-	err = yaml.Unmarshal(yamlFile, &conf)
+	
+	// Validate and complete configuration
+	if err := validateAndCompleteConfig(conf); err != nil {
+		log.Fatalf("Invalid configuration: %v", err)
+	}
+	
+	// Load template
+	templateText := loadTemplate()
+	
+	// Generate code using the template and configuration
+	outputFile, err := generateCode(conf, templateText)
 	if err != nil {
-		log.Fatalf("Failed to unmarshal YAML: %v\n", err)
+		log.Fatalf("Code generation error: %v", err)
 	}
-
-	// Generate UUID for ID if not provided
-	if conf.ID == "" {
-		conf.ID = uuid.New().String()
-	}
-
-	// Generate timestamp for Created if not provided
-	if conf.Created == "" {
-		conf.Created = time.Now().Format("2006-01-02 15:04:05")
-	}
-
-	// Create directory if it doesn't exist
-	err = os.MkdirAll("generated_code", 0755)
-	if err != nil {
-		log.Fatalf("Failed to create directory: %v\n", err)
-	}
-
-	// Create a file with a UTC timestamp in the name
-	timestamp := time.Now().UTC().Format("20060102-150405")
-	filename := fmt.Sprintf("generated_code/generated-%s.go", timestamp)
-	file, err := os.Create(filename)
-	if err != nil {
-		log.Fatalf("Failed to create file: %v\n", err)
-	}
-	defer file.Close()
-
-	// Create and execute the template
-	t := template.Must(template.New("goFile").Parse(templateText))
-	err = t.Execute(file, conf)
-	if err != nil {
-		log.Fatalf("Failed to execute template: %v\n", err)
-	}
-
-	fmt.Println("File generated:", filename)
+	
+	fmt.Println("File generated successfully:", outputFile)
 }
