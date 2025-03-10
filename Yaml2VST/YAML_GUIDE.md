@@ -17,10 +17,10 @@ This guide provides comprehensive documentation on how to structure YAML configu
 
 The general configuration section defines basic information about the test.
 
-- `id`: A unique identifier for the test.
-- `name`: The name of the test.
-- `unit`: The unit to which the test belongs.
-- `created`: The creation date of the test in YYYY-MM-DD format.
+- `id`: A unique identifier for the test. (Optional - will be auto-generated if not provided)
+- `name`: The name of the test. (Required)
+- `unit`: The unit to which the test belongs. (Required)
+- `created`: The creation date and time. (Optional - will be auto-generated if not provided)
 
 Example:
 
@@ -28,7 +28,7 @@ Example:
 id: "12345"
 name: "TestName"
 unit: "TestUnit"
-created: "2023-01-01"
+created: "2023-01-01 12:34:56"
 ```
 
 ## 2. Imports
@@ -40,10 +40,10 @@ Example:
 ```yaml
 imports:
   - alias: "Endpoint"
-    path: "github.com/example/endpoint"
+    path: "github.com/preludeorg/libraries/go/tests/endpoint"
   - alias: "Network"
-    path: "github.com/example/network"
-  - path: "fmt"
+    path: "github.com/preludeorg/libraries/go/tests/network"
+  - path: "fmt"  # No alias needed for standard packages
 ```
 
 ## 3. Embedded Files
@@ -54,14 +54,14 @@ Example:
 
 ```yaml
 embeddedFiles:
-  - name: "file1"
+  - name: "emlFile"
     content: |
-      //go:embed file1.txt
-      var file1 []byte
-  - name: "file2"
+      //go:embed fromrussiawithlove.eml
+      var emlFile []byte
+  - name: "pdfFile"
     content: |
-      //go:embed file2.txt
-      var file2 []byte
+      //go:embed fromrussiawithlove.pdf
+      var pdfFile []byte
 ```
 
 ## 4. Endpoint Calls
@@ -70,9 +70,9 @@ The `endpointCalls` section defines calls to Endpoint functions. Each call has t
 
 - `function`: The name of the Endpoint function to call.
 - `arguments`: A list of arguments for the function.
-- `shellCommands`: Optional shell commands to execute.
-- `testFunction`: The name of the test function (if applicable).
-- `cleanFunction`: The name of the clean-up function (if applicable).
+- `shellCommands`: Optional shell commands to execute (for Shell and ExecuteRandomCommand functions).
+- `testFunction`: The name of the test function (if applicable, used by Start).
+- `cleanFunction`: The name of the clean-up function (if applicable, used by Start).
 
 Example:
 
@@ -87,18 +87,44 @@ endpointCalls:
   - function: "Shell"
     shellCommands:
       - ["cmd.exe", "/C", "echo Hello, World"]
+  - function: "ExecuteRandomCommand"
+    shellCommands:
+      - ["ls", "-la"]
+      - ["echo", "Hello World"]
 ```
 
 ## 5. Network Calls
 
-The `networkCalls` section defines calls to Network functions. Each call has the following properties:
+The `networkCalls` section defines calls to Network functions. Each call has specific properties depending on the function type:
+
+### Common Network Properties
 
 - `function`: The name of the Network function to call.
-- `url`: The URL for the request (if applicable).
-- `headers`: HTTP headers (if applicable).
-- `queryParams`: Query parameters (if applicable).
-- `body`: Request body (if applicable).
-- Other function-specific properties.
+
+### HTTP Request Properties (GET, POST)
+
+- `url`: The URL for the request. (Required)
+- `headers`: HTTP headers as a map of string arrays.
+- `queryParams`: Query parameters as a map of string arrays.
+- `body`: Request body as a string.
+- `encoding`: Content encoding. (Optional)
+- `authType`: Authentication type. (Optional)
+- `credential`: Authentication credential. (Optional)
+- `timeout`: Request timeout in seconds. (Optional)
+- `userAgent`: User-Agent header. (Optional)
+
+### Socket Communication Properties (TCP, UDP)
+
+- `host`: The host to connect to. (Required)
+- `port`: The port to connect to. (Required)
+- `message`: The message to send. (Required)
+
+### Port Scanning Properties (ScanPort, MultiplePortScan)
+
+- `protocol`: The protocol to use ("tcp" or "udp"). (Required)
+- `hostname`: The hostname to scan. (Required)
+- `port`: The single port to scan (for ScanPort). (Required)
+- `ports`: An array of ports to scan (for MultiplePortScan). (Required)
 
 Example:
 
@@ -107,14 +133,33 @@ networkCalls:
   - function: "GET"
     url: "https://example.com"
     headers:
-      Content-Type:
-        - "application/json"
+      Content-Type: ["application/json"]
+    queryParams:
+      key: ["value"]
   - function: "POST"
     url: "https://example.com/api"
     headers:
-      Content-Type:
-        - "application/json"
+      Content-Type: ["application/json"]
     body: "{\"key\": \"value\"}"
+  - function: "TCP"
+    host: "127.0.0.1"
+    port: "8080"
+    message: "Hello TCP"
+  - function: "UDP"
+    host: "10.0.0.1"
+    port: "8081"
+    message: "Hello UDP"
+  - function: "ScanPort"
+    protocol: "tcp"
+    hostname: "localhost"
+    port: 80
+  - function: "MultiplePortScan"
+    protocol: "tcp"
+    hostname: "localhost"
+    ports:
+      - 22
+      - 80
+      - 443
 ```
 
 ## 6. Function Documentation
@@ -123,80 +168,91 @@ networkCalls:
 
 Here is documentation for the supported functions and their usage in the test:
 
+#### Endpoint Functions
+
 - **`Start`**
-  - **Arguments**: None
-  - **Description**: Start the test and execute the test and clean-up functions.
+  - **Description**: Initializes the test and executes the test and clean-up functions.
+  - **Properties**: 
+    - `testFunction`: The name of the function to execute for testing.
+    - `cleanFunction`: The name of the function to execute for cleanup.
 
 - **`Say`**
-  - **Arguments**: A list of messages to display.
-  - **Description**: Display messages in the test.
+  - **Description**: Displays messages in the test log.
+  - **Arguments**: A message string to display.
 
 - **`Shell`**
-  - **Arguments**: List of shell commands to execute.
-  - **Description**: Execute shell commands within the test.
+  - **Description**: Executes shell commands within the test.
+  - **Properties**:
+    - `shellCommands`: A list of command arrays, where each array represents a command and its arguments.
 
 - **`Stop`**
-  - **Arguments**: An error code.
-  - **Description**: Stop the test execution with the specified error code.
+  - **Description**: Stops the test execution with the specified error code.
+  - **Arguments**: An error code (integer).
 
 - **`Find`**
-  - **Arguments**: A file type to search for.
-  - **Description**: Search for files with the specified file type.
+  - **Description**: Searches for files with the specified file type.
+  - **Arguments**: A file extension to search for (e.g., ".txt").
+  - **Behavior**: Stops with code 104 if no files are found.
 
 - **`Read`**
+  - **Description**: Reads the contents of a file.
   - **Arguments**: The path to the file to read.
-  - **Description**: Read the contents of a file.
 
 - **`Write`**
-  - **Arguments**: The filename and content to write.
-  - **Description**: Write content to a file.
+  - **Description**: Writes content to a file.
+  - **Arguments**: 
+    - The filename to write to.
+    - The content to write.
 
 - **`Exists`**
+  - **Description**: Checks if a file exists.
   - **Arguments**: The file path to check.
-  -
-
- **Description**: Check if a file exists.
 
 - **`Quarantined`**
-  - **Arguments**: The filename and quarantine type.
-  - **Description**: Simulate file quarantine and check for malicious files.
+  - **Description**: Simulates file quarantine and checks for malicious files.
+  - **Arguments**: The filename to check.
+  - **Behavior**: Stops with code 105 if a malicious file is detected.
 
 - **`Remove`**
+  - **Description**: Removes a file.
   - **Arguments**: The file path to remove.
-  - **Description**: Remove a file.
 
 - **`ExecuteRandomCommand`**
-  - **Arguments**: List of random shell commands to execute.
-  - **Description**: Execute random shell commands.
+  - **Description**: Executes random shell commands from a provided list.
+  - **Properties**:
+    - `shellCommands`: A list of command arrays to randomly choose from.
 
 - **`IsAvailable`**
-  - **Arguments**: List of tools or commands to check for availability.
-  - **Description**: Check if tools or commands are available.
+  - **Description**: Checks if tools or commands are available.
+  - **Arguments**: List of tools or commands to check.
 
 - **`IsSecure`**
-  - **Arguments**: List of security checks to perform.
-  - **Description**: Check if the system is secure.
+  - **Description**: Performs security checks on the system.
+  - **Arguments**: None.
+
+#### Network Functions
 
 - **`GET`**
-  - **Arguments**: URL, headers, query parameters.
-  - **Description**: Execute an HTTP GET request.
+  - **Description**: Executes an HTTP GET request.
+  - **Properties**: See HTTP Request Properties above.
 
 - **`POST`**
-  - **Arguments**: URL, headers, request body.
-  - **Description**: Execute an HTTP POST request.
+  - **Description**: Executes an HTTP POST request.
+  - **Properties**: See HTTP Request Properties above.
 
 - **`TCP`**
-  - **Arguments**: Host, port, message.
-  - **Description**: Execute a TCP connection.
+  - **Description**: Establishes a TCP connection and sends a message.
+  - **Properties**: See Socket Communication Properties above.
 
 - **`UDP`**
-  - **Arguments**: Host, port, message.
-  - **Description**: Execute a UDP connection.
+  - **Description**: Establishes a UDP connection and sends a message.
+  - **Properties**: See Socket Communication Properties above.
 
 - **`ScanPort`**
-  - **Arguments**: Protocol, hostname, port.
-  - **Description**: Scan a port for availability.
+  - **Description**: Scans a single port to check if it's open.
+  - **Properties**: See Port Scanning Properties above.
 
 - **`MultiplePortScan`**
-  - **Arguments**: List of ports to scan.
-  - **Description**: Scan multiple ports for availability.
+  - **Description**: Scans multiple ports to check if they're open.
+  - **Properties**: See Port Scanning Properties above.
+  - **Note**: Must include protocol, hostname, and an array of ports.
